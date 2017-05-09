@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font: 13px Helvetica, Arial; }
+        form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+        form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+        form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+        #messages { list-style-type: none; margin: 0; padding: 0; }
+        #messages li { padding: 5px 10px; }
+        #messages li:nth-child(odd) { background: #eee; }
+    </style>
+</head>
+<body>
+<span id="connection"></span>
+<ul id="messages"></ul>
+<span id="notifyUser"></span>
+<form id="form" action="" onsubmit="return submitfunction(event)" >
+    <input type="hidden" id="user" value="" /><input id="m" autocomplete="off" onkeyup="notifyTyping();" placeholder="Type yor message here.." /><input type="submit" id="button" value="Send"/>
+</form>
+</body>
+<script src="/socket.io/socket.io.js" ></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    var socket = io();
+    msgto = '';
+    function submitfunction(e){
+        e.preventDefault();
+        var from = $('#user').val();
+
+        var message = $('#m').val();
+        if(message != '') {
+            socket.emit('chat', msgto, from, message);
+        }
+        $('#messages').append('<li><b style="color:' + 'green' + '">' + 'Me' + '</b>: ' + message + '</li>');
+        $('#m').val('').focus();
+        return false;
+    }
+
+    function notifyTyping() {
+//        var user = $('#user').val();
+        socket.emit('notifyUser', msgto);
+    }
+
+    socket.on('chat', function(to, from, msg){
+        var me = $('#user').val();
+        var color = (from === me) ? 'green' : '#009afd';
+        from = (from === me) ? 'Me' : from;
+        $('#messages').append('<li><b style="color:' + color + '">' + from + '</b>: ' + msg + '</li>');
+    });
+
+    socket.on('notifyUser', function(user){
+        var me = $('#user').val();
+//        if(user != me && user === msgto) {
+            $('#notifyUser').text(user + ' is typing ...');
+//        }
+        setTimeout(function(){ $('#notifyUser').text(''); }, 10000);
+    });
+
+    $(document).ready(function(){
+        var name = makeid();
+        $('#user').val(name);
+        console.log('I am ', name);
+        socket.emit('init',name);
+        socket.on('connectUser',function (to) {
+            if(to !== name && msgto === ''){
+                msgto = to;
+                $('#connection').text(to + ' is connected');
+                socket.emit('userConnected',name, to);
+            }
+            else if(msgto === ''){
+                $('#connection').text('Finding someone you can chat with...');
+            }
+        });
+        socket.on('userConnected',function (from, to) {
+            if(to === name && msgto === ''){
+                msgto = from;
+                $('#connection').text(from + ' is connected');
+            }
+        })
+    });
+
+    function makeid() {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for( var i=0; i < 5; i++ ) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
+</script>
+</html>
