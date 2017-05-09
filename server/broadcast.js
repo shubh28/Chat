@@ -8,10 +8,15 @@ app.get('/', function(req, res){
 });
 
 io.on('connection', function(socket){
+    // when a message is sent from client
     socket.on('chat', function(from, msg){
+        // send this message to all the connected users
         io.emit('chat', from, msg);
     });
+
+    // event for  showing typing
     socket.on('notifyUser', function(user){
+        // emitting it to all the users
         io.emit('notifyUser', user);
     });
 });
