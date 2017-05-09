@@ -1,4 +1,5 @@
-let app = require('express')();
+let express = require('express');
+let app = express();
 let http = require('http').Server(app);
 let io = require('socket.io')(http);
 let path = require('path');
@@ -7,8 +8,8 @@ app.get('/', function(req, res){
     res.sendFile(path.join(__dirname, '../client', 'private.html'));
 });
 
-var users = {};
-var sockets = {};
+let users = {};
+let sockets = {};
 
 io.on('connection', function(socket) {
 
